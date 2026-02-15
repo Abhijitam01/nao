@@ -1,0 +1,27 @@
+{
+  "name": "@analytics-agent/cli",
+  "version": "1.0.0",
+  "description": "CLI for analytics-agent — init projects and load CSV data",
+  "type": "module",
+  "bin": {
+    "analytics-agent": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "tsx src/index.ts",
+    "dev": "tsx watch src/index.ts"
+  },
+  "dependencies": {
+    "better-sqlite3": "^11.0.0",
+    "chalk": "^5.3.0",
+    "commander": "^12.1.0",
+    "csv-parse": "^5.5.0",
+    "ora": "^8.0.0"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.0",
+    "@types/node": "^20.0.0",
+    "tsx": "^4.7.0",
+    "typescript": "^5.4.0"
+  }
+}

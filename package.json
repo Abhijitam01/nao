@@ -1,0 +1,15 @@
+{
+  "name": "analytics-agent",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Natural language analytics on your CSV data",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "cli": "npm -w packages/cli run start",
+    "server": "npm -w packages/server run dev",
+    "web": "npm -w packages/web run dev",
+    "build": "npm -w packages/cli run build && npm -w packages/server run build"
+  }
+}
