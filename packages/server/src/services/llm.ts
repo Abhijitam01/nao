@@ -14,6 +14,7 @@ export interface LLMResponse {
   xAxis: string;
   yAxis: string;
   title: string;
+  description: string;
 }
 
 let client: OpenAI | null = null;
@@ -40,13 +41,13 @@ function buildPrompt(schema: SchemaInfo): string {
     })
     .join("\n\n");
 
-  return `You are a SQL query generator for SQLite databases.
+  return `You are a SQL query generator for SQLite databases. You are also a data visualization expert.
 
 Here is the database schema:
 
 ${tableDescriptions}
 
-Rules:
+SQL Rules:
 1. Generate ONLY valid SQLite SELECT queries.
 2. Never use DROP, DELETE, INSERT, UPDATE, ALTER, or CREATE.
 3. Use double quotes for table and column names.
@@ -54,6 +55,7 @@ Rules:
 5. When grouping by date/month, use the column as-is (dates are stored as TEXT like "2024-01").
 6. For aggregations, use SUM, AVG, COUNT, MIN, MAX as appropriate.
 7. Always alias computed columns with readable names.
+8. ORDER BY the x-axis column for charts (chronologically for dates, alphabetically for categories).
 
 You MUST respond with valid JSON only. No markdown, no code fences, no explanation.
 
@@ -62,14 +64,20 @@ Response format:
   "sql": "SELECT ...",
   "chartType": "line" | "bar" | "table",
   "xAxis": "column_name_for_x_axis",
-  "yAxis": "column_name_for_y_axis",
-  "title": "Human readable chart title"
+  "yAxis": "column_name_for_y_axis or comma-separated for multiple series",
+  "title": "Short chart title",
+  "description": "One sentence explaining what this data shows"
 }
 
-Chart type rules:
-- Use "line" for time series data (dates on x-axis)
-- Use "bar" for categorical comparisons (categories on x-axis)
-- Use "table" for detailed multi-column results or when no clear chart fits`;
+Chart type decision tree:
+1. Does the query have a date/time column? → "line" (time series)
+2. Does it compare categories (regions, products, etc.)? → "bar"
+3. Is there a single aggregated value (e.g., total)? → "table"
+4. Are there 5+ columns in the result? → "table"
+5. Default → "bar"
+
+Multi-series: If the user asks to compare multiple metrics (e.g., revenue vs costs),
+put all numeric column names in yAxis as comma-separated values like "revenue,costs".`
 }
 
 export async function generateSQL(
@@ -112,6 +120,7 @@ export async function generateSQL(
     parsed.xAxis = parsed.xAxis || "";
     parsed.yAxis = parsed.yAxis || "";
     parsed.title = parsed.title || "Query Results";
+    parsed.description = parsed.description || "";
 
     return parsed;
   } catch (parseError) {
@@ -122,10 +131,11 @@ export async function generateSQL(
     if (sqlMatch) {
       return {
         sql: sqlMatch[0].replace(/;$/, ""),
-        chartType: "table",
+        chartType: "table" as const,
         xAxis: "",
         yAxis: "",
         title: "Query Results",
+        description: "",
       };
     }
 

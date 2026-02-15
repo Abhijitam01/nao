@@ -11,6 +11,7 @@ interface Message {
     xAxis: string
     yAxis: string
     title: string
+    description: string
     results: Record<string, unknown>[]
     rowCount: number
   }
@@ -88,6 +89,7 @@ export default function ChatBox({ projectPath }: ChatBoxProps) {
             xAxis: data.xAxis,
             yAxis: data.yAxis,
             title: data.title,
+            description: data.description || '',
             results: data.results,
             rowCount: data.rowCount,
           },

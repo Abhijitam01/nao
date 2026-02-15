@@ -59,6 +59,7 @@ askRouter.post("/", async (req: Request, res: Response) => {
       xAxis: llmResponse.xAxis,
       yAxis: llmResponse.yAxis,
       title: llmResponse.title,
+      description: llmResponse.description,
       results,
       rowCount: results.length,
     });

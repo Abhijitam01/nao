@@ -7,6 +7,7 @@ interface MessageData {
   xAxis: string
   yAxis: string
   title: string
+  description: string
   results: Record<string, unknown>[]
   rowCount: number
 }
@@ -58,6 +59,18 @@ export default function MessageBubble({ message }: Props) {
               </div>
               <pre>{data.sql}</pre>
             </div>
+
+            {/* Description */}
+            {data.description && (
+              <p style={{
+                fontSize: 13,
+                color: 'var(--text-secondary)',
+                lineHeight: 1.5,
+                padding: '0 4px',
+              }}>
+                {data.description}
+              </p>
+            )}
 
             {/* Chart or Table */}
             {data.results.length > 0 && (
