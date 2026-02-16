@@ -1,122 +1,109 @@
-# Analytics Agent 📊
+# Analytics Agent (nao) 🤖📊
 
-> Ask your CSV data questions in plain English. Get SQL, results, and charts back instantly.
+A privacy-focused, local-first analytics agent that lets you query your CSV data using natural language. It generates optimized SQL, executes it against a local SQLite database, and visualizes the results.
 
+## 🌟 Features
+
+- **Natural Language Querying**: Ask questions in plain English ("Show total revenue mostly by region").
+- **Multi-Model Support**: Switch between **OpenAI**, **Google Gemini**, and **Groq** (Llama 3).
+- **Local-First Architecture**: Your data stays local in a SQLite database; only the schema and question are sent to the LLM.
+- **Smart Visualization**: Automatically picks the best chart type (Line, Bar, Table) for your data.
+- **Interactive Chat UI**: A modern React-based interface with dark mode and glassmorphism design.
+
+## 🏗️ Architecture
+
+```mermaid
+graph TD
+    User[👤 User] -->|1. Asks Question| Frontend[💻 React Frontend]
+    Frontend -->|2. POST /ask| Server[🚀 Express Server]
+
+    subgraph "Backend Services"
+        Server -->|3. Build Prompt| Schema[📄 Schema Reader]
+        Server -->|4. Generate SQL| LLM[🧠 LLM Service]
+        LLM -->|OpenAI / Gemini / Groq| API[☁️ External LLM API]
+        API -->|SQL| LLM
+        Server -->|5. Execute SQL| DB[(🗄️ SQLite DB)]
+        DB -->|Results| Server
+    end
+
+    Server -->|6. JSON Response| Frontend
+    Frontend -->|7. Render Chart| User
 ```
-┌──────────────┐     ┌──────────────┐     ┌──────────────┐
-│   CLI        │     │   Express    │     │   React UI   │
-│   Commander  │────▶│   Backend    │◀────│   + Recharts │
-│   + SQLite   │     │   + OpenAI   │     │              │
-└──────────────┘     └──────────────┘     └──────────────┘
-       │                    │                     │
-       ▼                    ▼                     ▼
-   CSV → DB          Schema → SQL           Charts / Tables
-```
 
-## Quick Start
+## 📂 Project Structure
 
-### 1. Install dependencies
+- **`packages/cli`**: Command-line tool to initialize projects and load data.
+- **`packages/server`**: Express backend handling API requests and database interactions.
+- **`packages/web`**: React + Vite frontend for the chat interface.
+- **`my-project/`**: Your active analytics project (schema + data).
+- **`sample/`**: Sample CSV data to get you started.
+
+## 🚀 Quick Start
+
+### 1. Setup Environment
+
+Create a `.env` file in the root directory:
 
 ```bash
-npm install
+cp .env.example .env
+# Edit .env with your API keys (OPENAI_API_KEY, GEMINI_API_KEY, or GROQ_API_KEY)
 ```
 
-### 2. Initialize a project
+### 2. Initialize a Project
+
+Create a new analytics project folder (if you haven't already):
 
 ```bash
 npx tsx packages/cli/src/index.ts init my-project
 ```
 
-### 3. Load your CSV data
+### 3. Load Your Data
+
+Copy your CSV file into the `data/` folder and load it:
 
 ```bash
+# Copy sample data
+cp sample/sales.csv my-project/data/
+
+# Load data into SQLite
 cd my-project
-cp /path/to/your/data.csv data/
-npx tsx ../packages/cli/src/index.ts load data/your-data.csv
+# NOTE: Make sure to clear previous databases if reloading
+rm -rf data/analytics.db
+npx tsx ../packages/cli/src/index.ts load data/sales.csv
 ```
 
-### 4. Set your OpenAI API key
+### 4. Run the Application
+
+Open **two terminal tabs**:
+
+**Terminal 1 (Backend):**
 
 ```bash
-# In the root directory, create .env
-cd ..
-echo "OPENAI_API_KEY=sk-your-key-here" > .env
+# Start backend on port 3000
+PORT=3000 npx tsx packages/server/src/index.ts
 ```
 
-### 5. Start the backend
-
-```bash
-npx tsx packages/server/src/index.ts
-```
-
-### 6. Start the frontend (new terminal)
+**Terminal 2 (Frontend):**
 
 ```bash
 cd packages/web
 npx vite
 ```
 
-### 7. Open http://localhost:5173
+### 5. Use the App
 
-Enter your project path (e.g., `/absolute/path/to/my-project`) and start asking questions!
+1. Open [http://localhost:5173](http://localhost:5173).
+2. Enter your project path: `/absolute/path/to/nao/my-project`.
+3. Start asking questions!
 
-## Example Questions
+## 🔧 Configuration
 
-- "Show me monthly revenue trend"
-- "Total revenue by region"
-- "Compare revenue vs costs over time"
-- "Which product has the highest profit?"
+You can configure the LLM provider in your `.env` file:
 
-## Tech Stack
+```bash
+# Provider: openai, gemini, or groq
+LLM_PROVIDER=groq
 
-| Component | Technology                       |
-| --------- | -------------------------------- |
-| CLI       | Node.js + TypeScript + Commander |
-| Database  | SQLite via better-sqlite3        |
-| Backend   | Express + CORS + dotenv          |
-| LLM       | OpenAI API (gpt-4o-mini)         |
-| Frontend  | Vite + React                     |
-| Charts    | Recharts                         |
-
-## Architecture
-
+# Optional: Override Model
+GROQ_MODEL=llama-3.3-70b-versatile
 ```
-nao/
-├── packages/
-│   ├── cli/           ← Commander CLI (init + load)
-│   │   └── src/
-│   │       ├── commands/   init.ts, load.ts
-│   │       └── utils/      csv-parser, schema-inferrer, db
-│   ├── server/        ← Express API
-│   │   └── src/
-│   │       ├── routes/     POST /ask
-│   │       ├── services/   llm, sql-executor, schema-reader
-│   │       └── utils/      sql sanitizer
-│   └── web/           ← React + Recharts
-│       └── src/
-│           ├── components/ ChatBox, MessageBubble, ChartRenderer, DataTable
-│           └── styles/     Dark theme CSS
-└── sample/
-    └── sales.csv      ← Demo dataset
-```
-
-## How It Works
-
-1. **CLI** parses CSV → infers column types → creates SQLite DB + `schema.json`
-2. **Backend** reads schema → builds LLM prompt → calls OpenAI → validates SQL → executes query
-3. **Frontend** sends question → receives results + chart hints → renders chart or table
-
-## Security
-
-- SQL queries are validated: only `SELECT` statements allowed
-- Dangerous keywords (`DROP`, `DELETE`, `INSERT`, etc.) are blocked
-- Database opened in read-only mode for query execution
-- No auth (local tool — not designed for production deployment)
-
-## Sample Data
-
-The `sample/sales.csv` contains 18 months of business data:
-
-- **Columns**: month, revenue, costs, profit, region, product
-- **Regions**: North, South, East, West
-- **Products**: Widget A, Widget B, Widget C

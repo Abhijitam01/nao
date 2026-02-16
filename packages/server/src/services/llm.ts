@@ -20,6 +20,7 @@ export interface LLMResponse {
 
 let openAIClient: OpenAI | null = null;
 let geminiClient: GoogleGenerativeAI | null = null;
+let groqClient: OpenAI | null = null;
 
 function getOpenAIClient(): OpenAI {
   if (!openAIClient) {
@@ -43,6 +44,21 @@ function getGeminiClient(): GoogleGenerativeAI {
     geminiClient = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
   }
   return geminiClient;
+}
+
+function getGroqClient(): OpenAI {
+  if (!groqClient) {
+    if (!process.env.GROQ_API_KEY) {
+      throw new Error(
+        "GROQ_API_KEY environment variable is not set. Create a .env file with GROQ_API_KEY=gsk_..."
+      );
+    }
+    groqClient = new OpenAI({
+      apiKey: process.env.GROQ_API_KEY,
+      baseURL: "https://api.groq.com/openai/v1",
+    });
+  }
+  return groqClient;
 }
 
 function buildPrompt(schema: SchemaInfo): string {
@@ -104,13 +120,25 @@ export async function generateSQL(
   try {
     if (provider === "gemini") {
       const genAI = getGeminiClient();
-      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+      const modelName = process.env.GEMINI_MODEL || "gemini-1.5-flash";
+      const model = genAI.getGenerativeModel({ model: modelName });
       
       const result = await model.generateContent([
         systemPrompt,
         `User Question: ${question}`,
       ]);
       content = result.response.text();
+    } else if (provider === "groq") {
+      const response = await getGroqClient().chat.completions.create({
+        model: process.env.GROQ_MODEL || "llama-3.3-70b-versatile",
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: question },
+        ],
+        temperature: 0,
+        max_tokens: 1000,
+      });
+      content = response.choices[0]?.message?.content || null;
     } else {
       // Default to OpenAI
       const response = await getOpenAIClient().chat.completions.create({

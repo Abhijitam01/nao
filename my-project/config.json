@@ -1,0 +1,11 @@
+{
+  "name": "my-project",
+  "database": "data/analytics.db",
+  "llm": {
+    "provider": "openai",
+    "model": "gpt-4o-mini"
+  },
+  "server": {
+    "port": 3001
+  }
+}

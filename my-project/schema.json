@@ -1,0 +1,44 @@
+{
+  "tables": [
+    {
+      "name": "sales",
+      "columns": [
+        {
+          "name": "month",
+          "type": "date",
+          "sqlType": "TEXT"
+        },
+        {
+          "name": "revenue",
+          "type": "number",
+          "sqlType": "REAL"
+        },
+        {
+          "name": "costs",
+          "type": "number",
+          "sqlType": "REAL"
+        },
+        {
+          "name": "profit",
+          "type": "number",
+          "sqlType": "REAL"
+        },
+        {
+          "name": "region",
+          "type": "string",
+          "sqlType": "TEXT"
+        },
+        {
+          "name": "product",
+          "type": "string",
+          "sqlType": "TEXT"
+        }
+      ],
+      "rowCount": 18,
+      "source": "sales.csv",
+      "loadedAt": "2026-02-16T01:51:41.019Z"
+    }
+  ],
+  "createdAt": "2026-02-16T01:51:05.200Z",
+  "version": "1.0.0"
+}
